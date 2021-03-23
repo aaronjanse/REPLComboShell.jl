@@ -122,7 +122,7 @@ function setup_repl(repl)
     history_mode.hp.mode_mapping[:julsh] = julsh
     julsh.hist = history_mode.hp
 
-    search_prompt, skeymap = LineEdit.setup_search_keymap(hp)
+    search_prompt, skeymap = LineEdit.setup_search_keymap(history_mode.hp)
 
     julsh.keymap_dict = LineEdit.keymap(Dict{Any,Any}[
         skeymap,
