@@ -6,3 +6,7 @@ version = "0.1.0"
 [deps]
 PEG = "12d937ae-5f68-53be-93c9-3a6f997a20a8"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+
+[compat]
+julia = "^1.5"
+PEG = "1"
