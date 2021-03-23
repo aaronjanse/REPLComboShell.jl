@@ -17,30 +17,6 @@ end
 @PEG.rule double_quote = "\"" & r"(\\.|[^\"])+" & "\""  |> x->x[2]
 @PEG.rule word = r"[^|\s\"']+"p
 
-function set_prompt(julsh)
-    location = if haskey(ENV, "SSH_CONNECTION")
-        hostname = gethostname()
-        "$hostname "
-    else
-        ""
-    end
-    path = replace(pwd(), homedir() => "~")
-    branch = if isfile(".git/HEAD")
-        head = readchomp(".git/HEAD")
-        matching = match(r"ref: refs/heads/(.+)", head)
-        label = if isnothing(matching)
-            "detached"
-        else
-            matching.captures[1]
-        end
-        " $label"
-    else
-        ""
-    end
-    julsh.prompt = repeat(" ", length(location) + length(path) + length(branch) + 2)
-    julsh.prompt_suffix = "\x1b[G$location\x1b[32m$path\x1b[36m$branch\x1b[39m> "
-end
-
 function is_shell_command(s)
     args = split(s, ' ')
     !isnothing(Sys.which(args[1])) && args[1] != "import" || args[1] == "cd"
@@ -69,7 +45,7 @@ function REPL.complete_line(c::JulishCompletionProvider, s::REPL.LineEdit.Prompt
     end
 end
 
-function setup_repl(repl)
+function setup_repl(repl, default_username)
     julsh = LineEdit.Prompt("test>";
         prompt_prefix = "",
         prompt_suffix = "",
@@ -78,6 +54,46 @@ function setup_repl(repl)
         complete      = JulishCompletionProvider(),
         sticky        = true,
     )
+
+    function set_prompt(julsh)
+        location = if haskey(ENV, "SSH_CONNECTION")
+            hostname = gethostname()
+            "$hostname "
+        else
+            ""
+        end
+        path_full = replace(pwd(), homedir() => "~")
+        path_dirname = dirname(path_full)
+        path = if length(path_dirname) > 1
+            path_parts = split(path_dirname, "/") .|> x->if length(x) > 0 x[1:1] else x end
+            push!(path_parts, basename(path_full))
+            join(path_parts, "/")
+        else
+            path_full
+        end
+        branch = if isfile(".git/HEAD")
+            head = readchomp(".git/HEAD")
+            matching = match(r"ref: refs/heads/(.+)", head)
+            label = if isnothing(matching)
+                "detached"
+            else
+                matching.captures[1]
+            end
+            " $label"
+        else
+            ""
+        end
+        julsh.prompt = repeat(" ", length(location) + length(path) + length(branch) + 2)
+        
+        username = ENV["USER"]
+        julsh.prompt_suffix = if username == default_username
+            "\x1b[G$location\x1b[32m$path\x1b[36m$branch\x1b[39m> "
+        elseif username == "root"
+            "\x1b[G$location\x1b[31m$path\x1b[33m$branch\x1b[39m# "
+        else
+            "\x1b[G$location\x1b[33m$path\x1b[32m$branch\x1b[39m% "
+        end
+    end
 
     function parse_to_expr(s)
         args = split(s, ' ')
