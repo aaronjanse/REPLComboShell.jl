@@ -12,7 +12,9 @@ end
 @PEG.rule script = command[1] & pipe_recv[*] |> process_pipeline
 @PEG.rule pipe_recv = r"\|"p & command |> x->x[2]
 @PEG.rule command = argument[+] |> (x)->Base.cmd_gen(x)
-@PEG.rule argument = word
+@PEG.rule argument = word, single_quote, double_quote
+@PEG.rule single_quote = "'" & r"(\\.|[^'])+" & "'"  |> x->x[2]
+@PEG.rule double_quote = "\"" & r"(\\.|[^\"])+" & "\""  |> x->x[2]
 @PEG.rule word = r"[^|\s\"']+"p
 
 function set_prompt(julsh)
@@ -80,7 +82,18 @@ function setup_repl(repl)
     function parse_to_expr(s)
         args = split(s, ' ')
         if !isnothing(Sys.which(args[1])) && args[1] != "import"
-            cmd = parse_whole(script, s)
+            cmd = nothing
+            try
+                cmd = parse_whole(script, s)
+            catch e
+                if isa(e, Base.Meta.ParseError)
+                    print(e.msg)
+                    return
+                else
+                    rethrow(e)
+                    return
+                end
+            end
             open(pipeline(stdin, ignorestatus(cmd), stdout), "r") do io
                 while true
                     try
@@ -235,7 +248,7 @@ function setup_repl(repl)
         return LineEdit.transition(s, julsh)
     end
 
-    repl.interface.modes[1] = julsh
+    repl.interface.modes[1] = julsh;
 end
 
 end # module
