@@ -65,47 +65,47 @@ function REPL.complete_line(c::JulishCompletionProvider, s::REPL.LineEdit.Prompt
     end
 end
 
-julsh = LineEdit.Prompt("test>";
-    prompt_prefix = "",
-    prompt_suffix = "",
-    keymap_dict   = REPL.LineEdit.default_keymap_dict,
-    on_enter      = (s -> true),
-    complete      = JulishCompletionProvider(),
-    sticky        = true,
-)
+function setup_repl(repl)
+    julsh = LineEdit.Prompt("test>";
+        prompt_prefix = "",
+        prompt_suffix = "",
+        keymap_dict   = REPL.LineEdit.default_keymap_dict,
+        on_enter      = (s -> true),
+        complete      = JulishCompletionProvider(),
+        sticky        = true,
+    )
 
-function parse_to_expr(s)
-    args = split(s, ' ')
-    if !isnothing(Sys.which(args[1])) && args[1] != "import"
-        cmd = parse_whole(script, s)
-        open(pipeline(stdin, ignorestatus(cmd), stdout), "r") do io
-            while true
-                try
-                    sleep(0) # Required? Yes. Cursed? Yep!
-                    success(io)
-                    break
-                catch
+    function parse_to_expr(s)
+        args = split(s, ' ')
+        if !isnothing(Sys.which(args[1])) && args[1] != "import"
+            cmd = parse_whole(script, s)
+            open(pipeline(stdin, ignorestatus(cmd), stdout), "r") do io
+                while true
+                    try
+                        sleep(0) # Required? Yes. Cursed? Yep!
+                        success(io)
+                        break
+                    catch
+                    end
                 end
             end
-        end
-        set_prompt(julsh);
-        nothing
-    elseif args[1] == "cd"
-        if length(args) != 2
-            cd()
-        elseif !isdir(args[2])
-            println("$(args[2]): directory not found")
+            set_prompt(julsh);
+            nothing
+        elseif args[1] == "cd"
+            if length(args) != 2
+                cd()
+            elseif !isdir(args[2])
+                println("$(args[2]): directory not found")
+            else
+                cd(expanduser(args[2]));
+            end
+            set_prompt(julsh);
+            nothing
         else
-            cd(expanduser(args[2]));
+            Meta.parse(s)
         end
-        set_prompt(julsh);
-        nothing
-    else
-        Meta.parse(s)
     end
-end
 
-function setup_repl(repl)
     set_prompt(julsh)
     
     if !isdefined(repl, :interface)
@@ -233,21 +233,7 @@ function setup_repl(repl)
         return LineEdit.transition(s, julsh)
     end
 
-    LineEdit.transition(repl.mistate, julsh)
     repl.interface.modes[1] = julsh
-end
-
-function __init__()
-    options = Base.JLOptions()
-    if (options.isinteractive != 1) && options.commands != C_NULL
-        return
-    end
-
-    if isdefined(Base, :active_repl)
-        setup_repl(Base.active_repl)
-    else
-        atreplinit(setup_repl)
-    end
 end
 
 end # module
