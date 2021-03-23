@@ -87,7 +87,7 @@ function setup_repl(repl)
                 cmd = parse_whole(script, s)
             catch e
                 if isa(e, Base.Meta.ParseError)
-                    print(e.msg)
+                    print("\x1b[31m", e.msg, "\x1b[m")
                     return
                 else
                     rethrow(e)

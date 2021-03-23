@@ -1,7 +1,7 @@
 name = "REPLComboShell"
 uuid = "7999ad71-703a-42c8-bff7-678f9adb94f9"
 authors = ["Aaron Janse <aaron@ajanse.me>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 PEG = "12d937ae-5f68-53be-93c9-3a6f997a20a8"
