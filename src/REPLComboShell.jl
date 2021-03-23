@@ -1,4 +1,4 @@
-module REPLJulish
+module REPLComboShell
 
 using PEG
 

@@ -1,4 +1,4 @@
-name = "REPLJulish"
+name = "REPLComboShell"
 uuid = "7999ad71-703a-42c8-bff7-678f9adb94f9"
 authors = ["Aaron Janse <aaron@ajanse.me>"]
 version = "0.1.0"
