@@ -1,5 +1,7 @@
 module REPLComboShell
 
+export setup_repl
+
 using PEG
 
 function process_pipeline(x)
